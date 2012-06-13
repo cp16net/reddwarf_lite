@@ -251,6 +251,9 @@ class InstanceController(BaseController):
         databases = body['instance'].get('databases')
         if databases is None:
             databases = []
+        users = body['instance'].get('users')
+        if users is None:
+            users = []
         if body['instance'].get('volume', None) is not None:
             try:
                 volume_size = int(body['instance']['volume']['size'])
@@ -259,7 +262,7 @@ class InstanceController(BaseController):
         else:
             volume_size = None
         instance = models.Instance.create(context, name, flavor_id,
-                                          image_id, databases,
+                                          image_id, databases, users,
                                           service_type, volume_size)
 
         return wsgi.Result(views.InstanceDetailView(instance, req=req,

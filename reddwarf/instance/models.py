@@ -82,6 +82,23 @@ def populate_databases(dbs):
     except ValueError as ve:
         raise rd_exceptions.BadRequest(ve.message)
 
+# copied the pattern from above but not sure where this should really go.
+def populate_users(usrs):
+    from reddwarf.guestagent.db import models as guest_models
+    try:
+        users = []
+        for usr in usrs:
+            myuser = guest_models.MySQLUser()
+            myuser.name = usr.get('name', '')
+            myuser.password = usr.get('password', '')
+            dbs = usr.get('databases', '')
+            for db in dbs:
+                myuser.database = db.get('name', '')
+            users.append(myuser.serialize())
+        return users
+    except ValueError as ve:
+        raise rd_exceptions.BadRequest(ve.message)
+
 
 class InstanceStatus(object):
 
@@ -344,7 +361,7 @@ class Instance(BuiltInstance):
 
     @classmethod
     def create(cls, context, name, flavor_id, image_id,
-               databases, service_type, volume_size):
+               databases, users, service_type, volume_size):
         client = create_nova_client(context)
         try:
             flavor = client.flavors.get(flavor_id)
@@ -361,7 +378,7 @@ class Instance(BuiltInstance):
             status=ServiceStatuses.NEW)
 
         task_api.API(context).create_instance(db_info.id, name, flavor_id,
-            flavor.ram, image_id, databases, service_type, volume_size)
+            flavor.ram, image_id, databases, users, service_type, volume_size)
         dns_client = create_dns_client(context)
         dns_client.update_hostname(db_info)
 
